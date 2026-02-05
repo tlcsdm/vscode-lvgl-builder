@@ -1,0 +1,126 @@
+{
+  "name": "tlcsdm-lvgl-builder",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "1.0.0",
+  "publisher": "unknowIfGuestInDream",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlcsdm/vscode-lvgl-builder"
+  },
+  "bugs": {
+    "url": "https://github.com/tlcsdm/vscode-lvgl-builder/issues"
+  },
+  "homepage": "https://github.com/tlcsdm/vscode-lvgl-builder#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "lvgl",
+    "gui",
+    "ui",
+    "embedded",
+    "visual",
+    "builder",
+    "xml",
+    "code generator"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "tlcsdm.lvglBuilder.editor",
+        "displayName": "%editor.displayName%",
+        "selector": [
+          {
+            "filenamePattern": "*.lvgl.xml"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "commands": [
+      {
+        "command": "tlcsdm.lvglBuilder.openEditor",
+        "title": "%command.openEditor.title%",
+        "category": "%command.openEditor.category%"
+      },
+      {
+        "command": "tlcsdm.lvglBuilder.generateCode",
+        "title": "%command.generateCode.title%",
+        "category": "%command.generateCode.category%"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "tlcsdm.lvglBuilder.openEditor",
+          "when": "resourceExtname == .xml",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "tlcsdm.lvglBuilder.generateCode",
+          "when": "activeCustomEditorId == tlcsdm.lvglBuilder.editor",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "%config.title%",
+      "properties": {
+        "tlcsdm.lvglBuilder.defaultLayout": {
+          "type": "string",
+          "default": "flex",
+          "enum": [
+            "flex",
+            "grid",
+            "none"
+          ],
+          "enumDescriptions": [
+            "%config.defaultLayout.flex%",
+            "%config.defaultLayout.grid%",
+            "%config.defaultLayout.none%"
+          ],
+          "description": "%config.defaultLayout.description%"
+        },
+        "tlcsdm.lvglBuilder.generateComments": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.generateComments.description%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test --config ./.vscode-test.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^3.2.2",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.54.0"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.3.4"
+  },
+  "license": "MIT"
+}
