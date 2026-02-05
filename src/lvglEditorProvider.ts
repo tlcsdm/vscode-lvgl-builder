@@ -624,7 +624,7 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
             }
 
             function generateId() {
-                return 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                return 'node_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11);
             }
 
             // Render component palette

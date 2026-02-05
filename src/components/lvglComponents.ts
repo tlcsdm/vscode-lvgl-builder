@@ -366,7 +366,7 @@ export const lvglComponents: LvglComponent[] = [
         icon: '📅',
         properties: [
             { name: 'name', type: 'string', default: 'calendar', category: 'basic' },
-            { name: 'today_year', type: 'number', default: 2024, category: 'basic' },
+            { name: 'today_year', type: 'number', default: new Date().getFullYear(), category: 'basic' },
             { name: 'today_month', type: 'number', default: 1, min: 1, max: 12, category: 'basic' },
             { name: 'today_day', type: 'number', default: 1, min: 1, max: 31, category: 'basic' },
             ...commonStyleProperties,

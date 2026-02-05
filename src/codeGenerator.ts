@@ -32,8 +32,8 @@ function propertyToCode(propName: string, value: string | number | boolean): str
             const hex = value.slice(1);
             return `lv_color_hex(0x${hex})`;
         }
-        // Handle string escaping
-        return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\\n/g, '\\n')}"`;
+        // Handle string escaping - escape backslashes and quotes
+        return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
     }
     return String(value);
 }
@@ -353,7 +353,7 @@ function parseChildren(parent: Record<string, unknown>): LvglNode[] {
 
             const nodeItem = item as Record<string, unknown>;
             const node: LvglNode = {
-                id: String(nodeItem['id'] || `${key}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`),
+                id: String(nodeItem['id'] || `${key}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`),
                 type: key.startsWith('lv_') ? key : `lv_${key}`,
                 name: String(nodeItem['name'] || key),
                 properties: {},
