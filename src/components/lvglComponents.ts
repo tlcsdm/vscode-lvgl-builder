@@ -503,6 +503,153 @@ export const lvglComponents: LvglComponent[] = [
         canHaveChildren: true,
         createCode: 'lv_win_create'
     },
+    
+    // Animation Image
+    {
+        type: 'lv_animimg',
+        displayName: 'Animation Image',
+        category: 'display',
+        icon: '🎞',
+        properties: [
+            { name: 'name', type: 'string', default: 'animimg', category: 'basic' },
+            { name: 'duration', type: 'number', default: 1000, min: 100, category: 'basic' },
+            { name: 'repeat_count', type: 'number', default: -1, category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_animimg_create'
+    },
+    
+    // Canvas
+    {
+        type: 'lv_canvas',
+        displayName: 'Canvas',
+        category: 'display',
+        icon: '🖌',
+        properties: [
+            { name: 'name', type: 'string', default: 'canvas', category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_canvas_create'
+    },
+    
+    // Image Button
+    {
+        type: 'lv_imgbtn',
+        displayName: 'Image Button',
+        category: 'input',
+        icon: '🖼',
+        properties: [
+            { name: 'name', type: 'string', default: 'imgbtn', category: 'basic' },
+            { name: 'src_left', type: 'string', default: '', category: 'basic' },
+            { name: 'src_mid', type: 'string', default: '', category: 'basic' },
+            { name: 'src_right', type: 'string', default: '', category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_imgbtn_create'
+    },
+    
+    // LED
+    {
+        type: 'lv_led',
+        displayName: 'LED',
+        category: 'display',
+        icon: '💡',
+        properties: [
+            { name: 'name', type: 'string', default: 'led', category: 'basic' },
+            { name: 'brightness', type: 'number', default: 255, min: 0, max: 255, category: 'basic' },
+            { name: 'color', type: 'color', default: '#00ff00', category: 'style' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_led_create'
+    },
+    
+    // Menu
+    {
+        type: 'lv_menu',
+        displayName: 'Menu',
+        category: 'container',
+        icon: '☰',
+        properties: [
+            { name: 'name', type: 'string', default: 'menu', category: 'basic' },
+            { name: 'mode_header', type: 'select', default: 'top_fixed', options: ['top_fixed', 'top_static', 'bottom_fixed'], category: 'basic' },
+            { name: 'mode_root_back_btn', type: 'select', default: 'enabled', options: ['enabled', 'disabled'], category: 'basic' },
+            ...commonStyleProperties,
+            ...layoutProperties,
+        ],
+        canHaveChildren: true,
+        createCode: 'lv_menu_create'
+    },
+    
+    // Scale (v9+)
+    {
+        type: 'lv_scale',
+        displayName: 'Scale',
+        category: 'display',
+        icon: '📏',
+        properties: [
+            { name: 'name', type: 'string', default: 'scale', category: 'basic' },
+            { name: 'mode', type: 'select', default: 'horizontal_bottom', options: ['horizontal_top', 'horizontal_bottom', 'vertical_left', 'vertical_right', 'round_inner', 'round_outer'], category: 'basic' },
+            { name: 'total_tick_count', type: 'number', default: 11, min: 2, category: 'basic' },
+            { name: 'major_tick_every', type: 'number', default: 5, min: 1, category: 'basic' },
+            { name: 'range_min', type: 'number', default: 0, category: 'basic' },
+            { name: 'range_max', type: 'number', default: 100, category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_scale_create'
+    },
+    
+    // Span Group
+    {
+        type: 'lv_spangroup',
+        displayName: 'Span Group',
+        category: 'display',
+        icon: '📄',
+        properties: [
+            { name: 'name', type: 'string', default: 'spangroup', category: 'basic' },
+            { name: 'align', type: 'select', default: 'left', options: ['left', 'center', 'right'], category: 'basic' },
+            { name: 'overflow', type: 'select', default: 'clip', options: ['clip', 'ellipsis'], category: 'basic' },
+            { name: 'indent', type: 'number', default: 0, min: 0, category: 'basic' },
+            { name: 'mode', type: 'select', default: 'expand', options: ['expand', 'break', 'fixed'], category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_spangroup_create'
+    },
+    
+    // Color Wheel (lv_colorwheel)
+    {
+        type: 'lv_colorwheel',
+        displayName: 'Color Wheel',
+        category: 'input',
+        icon: '🎨',
+        properties: [
+            { name: 'name', type: 'string', default: 'colorwheel', category: 'basic' },
+            { name: 'mode', type: 'select', default: 'hue', options: ['hue', 'saturation', 'value'], category: 'basic' },
+            { name: 'mode_fixed', type: 'boolean', default: false, category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_colorwheel_create'
+    },
+    
+    // Meter (lv_meter) - gauge replacement
+    {
+        type: 'lv_meter',
+        displayName: 'Meter',
+        category: 'display',
+        icon: '⏱',
+        properties: [
+            { name: 'name', type: 'string', default: 'meter', category: 'basic' },
+            ...commonStyleProperties,
+        ],
+        canHaveChildren: false,
+        createCode: 'lv_meter_create'
+    },
 ];
 
 /**
