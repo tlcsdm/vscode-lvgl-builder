@@ -323,15 +323,28 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
             font-size: 11px;
             color: #aaa;
             user-select: none;
+            overflow: hidden;
         }
 
         .lv-element.selected {
-            border: 2px solid var(--button-bg);
-            box-shadow: 0 0 0 2px rgba(14, 99, 156, 0.3);
+            outline: 2px solid var(--button-bg);
+            outline-offset: 1px;
+            box-shadow: 0 0 0 3px rgba(14, 99, 156, 0.3);
         }
 
         .lv-element:hover {
-            border-color: var(--button-bg);
+            outline: 1px solid var(--button-bg);
+            outline-offset: 0px;
+        }
+
+        .lv-element.container-element {
+            border-style: dashed;
+        }
+
+        .lv-element.drop-target {
+            outline: 2px dashed #4caf50;
+            outline-offset: 1px;
+            background: rgba(76, 175, 80, 0.1) !important;
         }
 
         .resize-handle {
@@ -459,8 +472,30 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
             color: var(--highlight-fg);
         }
 
+        .hierarchy-item.drop-target-hierarchy {
+            border-bottom: 2px solid var(--button-bg);
+        }
+
+        .hierarchy-item.drop-into-hierarchy {
+            background: rgba(76, 175, 80, 0.2);
+            outline: 1px dashed #4caf50;
+        }
+
         .hierarchy-indent {
             padding-left: 16px;
+        }
+
+        .hierarchy-children {
+            border-left: 1px solid var(--border-color);
+            margin-left: 16px;
+        }
+
+        .hierarchy-toggle {
+            width: 12px;
+            font-size: 10px;
+            cursor: pointer;
+            flex-shrink: 0;
+            text-align: center;
         }
 
         /* Empty state */
@@ -689,8 +724,12 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                 if (!comp) return;
 
                 const el = document.createElement('div');
-                el.className = 'lv-element' + (node.id === selectedNodeId ? ' selected' : '');
+                let className = 'lv-element';
+                if (node.id === selectedNodeId) className += ' selected';
+                if (comp.canHaveChildren) className += ' container-element';
+                el.className = className;
                 el.dataset.id = node.id;
+                el.dataset.canHaveChildren = comp.canHaveChildren ? 'true' : 'false';
                 
                 const x = node.properties.x || 0;
                 const y = node.properties.y || 0;
@@ -706,14 +745,30 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                 if (node.properties.bg_color) {
                     el.style.backgroundColor = node.properties.bg_color;
                 }
+                if (node.properties.bg_opa !== undefined) {
+                    el.style.opacity = (Number(node.properties.bg_opa) / 255).toFixed(2);
+                }
                 if (node.properties.border_width) {
                     el.style.borderWidth = node.properties.border_width + 'px';
+                    el.style.borderStyle = comp.canHaveChildren ? 'dashed' : 'solid';
                 }
                 if (node.properties.border_color) {
                     el.style.borderColor = node.properties.border_color;
                 }
                 if (node.properties.radius) {
                     el.style.borderRadius = node.properties.radius + 'px';
+                }
+                if (node.properties.pad_top) {
+                    el.style.paddingTop = node.properties.pad_top + 'px';
+                }
+                if (node.properties.pad_bottom) {
+                    el.style.paddingBottom = node.properties.pad_bottom + 'px';
+                }
+                if (node.properties.pad_left) {
+                    el.style.paddingLeft = node.properties.pad_left + 'px';
+                }
+                if (node.properties.pad_right) {
+                    el.style.paddingRight = node.properties.pad_right + 'px';
                 }
                 
                 // Display component info
@@ -743,6 +798,42 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                     startDrag(node, el, e);
                 });
                 
+                // Enable drop on container elements
+                if (comp.canHaveChildren) {
+                    el.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'copy';
+                        el.classList.add('drop-target');
+                    });
+                    el.addEventListener('dragleave', (e) => {
+                        e.stopPropagation();
+                        el.classList.remove('drop-target');
+                    });
+                    el.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        el.classList.remove('drop-target');
+                        canvas.classList.remove('drag-over');
+                        
+                        if (!draggedComponent) return;
+                        
+                        const containerRect = el.getBoundingClientRect();
+                        const x = e.clientX - containerRect.left;
+                        const y = e.clientY - containerRect.top;
+                        
+                        const newNode = createNewNode(draggedComponent, x, y);
+                        node.children.push(newNode);
+                        selectedNodeId = newNode.id;
+                        draggedComponent = null;
+                        
+                        updateXml();
+                        renderCanvas();
+                        renderHierarchy();
+                        renderProperties();
+                    });
+                }
+                
                 parent.appendChild(el);
                 
                 // Render children
@@ -767,6 +858,51 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                 return null;
             }
 
+            // Helper to count all nodes for naming
+            function countAllNodes(nodeList = nodes) {
+                let count = nodeList.length;
+                for (const n of nodeList) {
+                    count += countAllNodes(n.children);
+                }
+                return count;
+            }
+
+            // Helper to find parent node of a given node
+            function findParentNode(nodeId, nodeList = nodes, parent = null) {
+                for (const node of nodeList) {
+                    if (node.id === nodeId) return parent;
+                    const found = findParentNode(nodeId, node.children, node);
+                    if (found !== undefined) return found;
+                }
+                return undefined;
+            }
+
+            // Create a new node from a component definition at given position
+            function createNewNode(comp, x, y) {
+                const newNode = {
+                    id: generateId(),
+                    type: comp.type,
+                    name: comp.type.replace('lv_', '') + '_' + (countAllNodes() + 1),
+                    properties: {},
+                    children: []
+                };
+                
+                // Copy default properties first
+                for (const prop of comp.properties) {
+                    if (prop.default !== undefined && prop.name !== 'name') {
+                        newNode.properties[prop.name] = prop.default;
+                    }
+                }
+                
+                // Override position with drop location (centered on cursor)
+                const width = newNode.properties.width || 100;
+                const height = newNode.properties.height || 50;
+                newNode.properties.x = Math.max(0, Math.round(x - width / 2));
+                newNode.properties.y = Math.max(0, Math.round(y - height / 2));
+                
+                return newNode;
+            }
+
             // Drag and drop for moving
             function startDrag(node, el, e) {
                 isDragging = true;
@@ -776,11 +912,13 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                     y: e.clientY - rect.top
                 };
                 
+                const parentEl = el.parentElement;
+                
                 const moveHandler = (e) => {
                     if (!isDragging) return;
-                    const canvasRect = canvas.getBoundingClientRect();
-                    const x = Math.max(0, Math.min(e.clientX - canvasRect.left - dragOffset.x, canvas.offsetWidth - el.offsetWidth));
-                    const y = Math.max(0, Math.min(e.clientY - canvasRect.top - dragOffset.y, canvas.offsetHeight - el.offsetHeight));
+                    const parentRect = parentEl.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(e.clientX - parentRect.left - dragOffset.x, parentEl.offsetWidth - el.offsetWidth));
+                    const y = Math.max(0, Math.min(e.clientY - parentRect.top - dragOffset.y, parentEl.offsetHeight - el.offsetHeight));
                     el.style.left = x + 'px';
                     el.style.top = y + 'px';
                     node.properties.x = Math.round(x);
@@ -850,25 +988,7 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 
-                const newNode = {
-                    id: generateId(),
-                    type: draggedComponent.type,
-                    name: draggedComponent.type.replace('lv_', '') + '_' + (nodes.length + 1),
-                    properties: {
-                        x: Math.round(x),
-                        y: Math.round(y),
-                        width: 100,
-                        height: 50
-                    },
-                    children: []
-                };
-                
-                // Copy default properties
-                for (const prop of draggedComponent.properties) {
-                    if (prop.default !== undefined && prop.name !== 'name') {
-                        newNode.properties[prop.name] = prop.default;
-                    }
-                }
+                const newNode = createNewNode(draggedComponent, x, y);
                 
                 nodes.push(newNode);
                 selectedNodeId = newNode.id;
@@ -904,16 +1024,120 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
 
             function renderHierarchyItem(node, parent, depth) {
                 const comp = components.find(c => c.type === node.type);
+                const wrapper = document.createElement('div');
+                
                 const el = document.createElement('div');
                 el.className = 'hierarchy-item' + (node.id === selectedNodeId ? ' selected' : '');
                 el.style.paddingLeft = (8 + depth * 16) + 'px';
-                el.innerHTML = '<span>' + (comp ? comp.icon : '□') + '</span><span>' + node.name + '</span>';
-                el.addEventListener('click', () => selectNode(node.id));
-                parent.appendChild(el);
+                el.dataset.nodeId = node.id;
+                el.draggable = true;
                 
-                for (const child of node.children) {
-                    renderHierarchyItem(child, parent, depth + 1);
+                // Toggle for containers with children
+                let toggleHtml = '<span class="hierarchy-toggle">';
+                if (comp && comp.canHaveChildren) {
+                    toggleHtml += node.children.length > 0 ? '▼' : '▷';
+                } else {
+                    toggleHtml += ' ';
                 }
+                toggleHtml += '</span>';
+                
+                el.innerHTML = toggleHtml + '<span>' + (comp ? comp.icon : '□') + '</span><span>' + node.name + (comp && comp.canHaveChildren ? ' 📂' : '') + '</span>';
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectNode(node.id);
+                });
+                
+                // Drag from hierarchy for reparenting
+                el.addEventListener('dragstart', (e) => {
+                    e.stopPropagation();
+                    e.dataTransfer.setData('text/plain', node.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    draggedHierarchyNodeId = node.id;
+                });
+                el.addEventListener('dragend', () => {
+                    draggedHierarchyNodeId = null;
+                });
+                
+                // Drop onto hierarchy item for reparenting
+                if (comp && comp.canHaveChildren) {
+                    el.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (draggedHierarchyNodeId && draggedHierarchyNodeId !== node.id) {
+                            e.dataTransfer.dropEffect = 'move';
+                            el.classList.add('drop-into-hierarchy');
+                        }
+                    });
+                    el.addEventListener('dragleave', (e) => {
+                        e.stopPropagation();
+                        el.classList.remove('drop-into-hierarchy');
+                    });
+                    el.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        el.classList.remove('drop-into-hierarchy');
+                        
+                        if (draggedHierarchyNodeId && draggedHierarchyNodeId !== node.id) {
+                            // Prevent dropping a parent into its own child
+                            if (!isDescendant(draggedHierarchyNodeId, node.id)) {
+                                reparentNode(draggedHierarchyNodeId, node.id);
+                            }
+                            draggedHierarchyNodeId = null;
+                        }
+                    });
+                }
+                
+                wrapper.appendChild(el);
+                
+                // Render children in a container with tree line
+                if (node.children.length > 0) {
+                    const childContainer = document.createElement('div');
+                    childContainer.className = 'hierarchy-children';
+                    for (const child of node.children) {
+                        renderHierarchyItem(child, childContainer, depth + 1);
+                    }
+                    wrapper.appendChild(childContainer);
+                }
+                
+                parent.appendChild(wrapper);
+            }
+            
+            let draggedHierarchyNodeId = null;
+            
+            // Check if potentialChildId is a descendant of potentialParentId
+            function isDescendant(potentialParentId, potentialChildId) {
+                const parent = findNode(potentialParentId);
+                if (!parent) return false;
+                function check(children) {
+                    for (const child of children) {
+                        if (child.id === potentialChildId) return true;
+                        if (check(child.children)) return true;
+                    }
+                    return false;
+                }
+                return check(parent.children);
+            }
+            
+            // Move a node to become a child of another node
+            function reparentNode(nodeId, newParentId) {
+                const node = findNode(nodeId);
+                if (!node) return;
+                
+                // Remove from current location
+                deleteNode(nodeId);
+                
+                // Add to new parent
+                const newParent = findNode(newParentId);
+                if (newParent) {
+                    newParent.children.push(node);
+                } else {
+                    nodes.push(node);
+                }
+                
+                updateXml();
+                renderCanvas();
+                renderHierarchy();
+                renderProperties();
             }
 
             // Render properties panel
