@@ -746,7 +746,7 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                     el.style.backgroundColor = node.properties.bg_color;
                 }
                 if (node.properties.bg_opa !== undefined) {
-                    el.style.opacity = (node.properties.bg_opa / 255).toFixed(2);
+                    el.style.opacity = (Number(node.properties.bg_opa) / 255).toFixed(2);
                 }
                 if (node.properties.border_width) {
                     el.style.borderWidth = node.properties.border_width + 'px';
