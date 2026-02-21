@@ -516,6 +516,31 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
         .empty-canvas-text {
             font-size: 14px;
         }
+
+        .context-menu {
+            position: fixed;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 0;
+            min-width: 120px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .context-menu-item {
+            padding: 6px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background: var(--highlight-bg);
+            color: var(--highlight-fg);
+        }
     </style>
 </head>
 <body>
@@ -637,7 +662,7 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                     const node = {
                         id: child.getAttribute('id') || generateId(),
                         type: 'lv_' + child.tagName,
-                        name: child.getAttribute('name') || child.tagName,
+                        name: child.getAttribute('name') !== null ? child.getAttribute('name') : child.tagName,
                         properties: {},
                         children: []
                     };
@@ -795,7 +820,18 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                 el.addEventListener('mousedown', (e) => {
                     e.stopPropagation();
                     selectNode(node.id);
-                    startDrag(node, el, e);
+                    const freshEl = canvas.querySelector('[data-id="' + node.id + '"]');
+                    if (freshEl) {
+                        startDrag(node, freshEl, e);
+                    }
+                });
+
+                // Right-click context menu
+                el.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectNode(node.id);
+                    showContextMenu(e, node.id);
                 });
                 
                 // Enable drop on container elements
@@ -1331,6 +1367,48 @@ export class LvglEditorProvider implements vscode.CustomTextEditorProvider {
                     updateChildIds(child);
                 }
             }
+
+            // Context menu
+            let contextMenu = null;
+
+            function showContextMenu(e, nodeId) {
+                hideContextMenu();
+                contextMenu = document.createElement('div');
+                contextMenu.className = 'context-menu';
+
+                const deleteItem = document.createElement('div');
+                deleteItem.className = 'context-menu-item';
+                deleteItem.innerHTML = '<span>🗑️</span><span>Delete</span>';
+                deleteItem.addEventListener('click', () => {
+                    selectedNodeId = nodeId;
+                    deleteBtn.click();
+                    hideContextMenu();
+                });
+                contextMenu.appendChild(deleteItem);
+
+                const dupItem = document.createElement('div');
+                dupItem.className = 'context-menu-item';
+                dupItem.innerHTML = '<span>📋</span><span>Duplicate</span>';
+                dupItem.addEventListener('click', () => {
+                    selectedNodeId = nodeId;
+                    duplicateBtn.click();
+                    hideContextMenu();
+                });
+                contextMenu.appendChild(dupItem);
+
+                contextMenu.style.left = e.clientX + 'px';
+                contextMenu.style.top = e.clientY + 'px';
+                document.body.appendChild(contextMenu);
+            }
+
+            function hideContextMenu() {
+                if (contextMenu) {
+                    contextMenu.remove();
+                    contextMenu = null;
+                }
+            }
+
+            document.addEventListener('click', hideContextMenu);
 
             // Keyboard shortcuts
             document.addEventListener('keydown', (e) => {
