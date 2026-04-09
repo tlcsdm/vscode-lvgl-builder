@@ -120,7 +120,7 @@
     "typescript-eslint": "^8.58.1"
   },
   "dependencies": {
-    "fast-xml-parser": "^5.5.10"
+    "fast-xml-parser": "^5.5.11"
   },
   "overrides": {
     "glob": "^13.0.0",
