@@ -2,7 +2,7 @@ import eslint from '@eslint/js';
 
 // Use dynamic import to gracefully handle typescript-eslint incompatibility
 // with newer TypeScript versions until typescript-eslint adds support.
-let tseslint;
+let tseslint = undefined;
 try {
     ({ default: tseslint } = await import('typescript-eslint'));
 } catch {
