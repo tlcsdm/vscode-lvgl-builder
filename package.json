@@ -104,7 +104,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
+    "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "vscode-test --config ./.vscode-test.json"
   },
   "devDependencies": {
@@ -116,7 +116,7 @@
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.9.2",
     "eslint": "^9.39.4",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.63.0"
   },
   "dependencies": {
