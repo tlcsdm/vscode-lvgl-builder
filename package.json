@@ -115,7 +115,7 @@
     "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.9.2",
-    "eslint": "^9.39.4",
+    "eslint": "^9.39.5",
     "typescript": "^7.0.2",
     "typescript-eslint": "^8.63.0"
   },
